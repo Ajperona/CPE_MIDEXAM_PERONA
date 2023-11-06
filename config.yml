@@ -1,0 +1,45 @@
+---
+
+- hosts: all
+  become: true
+  pre_tasks:
+
+- hosts: influx_ubuntu
+  become: true
+  roles:
+    - influx_ubuntu
+
+- hosts: influx_centos
+  become: true
+  roles:
+    - influx_centos
+    
+- hosts: nagios_centos
+  become: true
+  roles:
+    - nagios_ubuntu
+
+- hosts: nagios_centos
+  become: true
+  roles:
+    - nagios_centos
+
+- hosts: prometheus_ubuntu
+  become: true
+  roles:
+    - prometheus_ubuntu
+
+- hosts: prometheus_centos
+  become: true
+  roles:
+    - prometheus_centos
+
+- hosts: elk_ubuntu
+  become: true
+  roles:
+    - elk_ubuntu
+
+- hosts: elk_centos
+  become: true
+  roles:
+    - elk_centos

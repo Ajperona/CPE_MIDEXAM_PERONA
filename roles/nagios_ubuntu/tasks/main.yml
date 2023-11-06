@@ -1,0 +1,115 @@
+---
+- name: nagios libraries and dependencies (Ubuntu)
+  tags: ubuntu, dependencies, libraries
+  apt:
+    name:
+      - autoconf
+      - libc6
+      - gcc
+      - make
+      - wget
+      - unzip
+      - apache2
+      - php
+      - libapache2-mod-php
+      - libgd-dev
+      - openssl
+      - libssl-dev
+      - bc
+      - gawk
+      - dc
+      - build-essential
+      - snmp
+      - libnet-snmp-perl
+      - gettext
+      - python3
+      - python3-pip
+    state: latest
+
+- name: passlib package
+  pip:
+    name: passlib
+
+- name: nagios directory PATH
+  file:
+    path: ~/nagios
+    state: directory
+
+- name: downloading nagios
+  unarchive:
+    src: https://github.com/NagiosEnterprises/nagioscore/archive/nagios-4.4.6.tar.gz
+    dest: ~/nagios
+    remote_src: yes
+    mode: 0777
+    owner: root
+    group: root
+
+- name: downloading nagios plugins
+  unarchive:
+    src: https://github.com/nagios-plugins/nagios-plugins/archive/release-2.3.3.tar.gz
+    dest: ~/nagios
+    remote_src: yes
+    mode: 0777
+    owner: root
+    group: root
+
+- name: Configure Nagios
+  command: cd ~/nagios/nagioscore-** && ./configure
+  become: yes
+
+- name: Make all
+  command: cd ~/nagios/nagioscore-** && make all
+  become: yes
+
+- name: Install groups and users
+  command: cd ~/nagios/nagioscore-** && make install-groups-users
+  become: yes
+
+- name: Add user to group
+  command: usermod -a -G nagios apache
+  become: yes
+
+- name: Install Nagios
+  command: cd ~/nagios/nagioscore-** && make install
+  become: yes
+
+- name: Install daemon init
+  command: cd ~/nagios/nagioscore-** && make install-daemoninit
+  become: yes
+
+- name: Install command mode
+  command: cd ~/nagios/nagioscore-** && make install-commandmode
+  become: yes
+
+- name: Install config
+  command: cd ~/nagios/nagioscore-** && make install-config
+  become: yes
+
+- name: Install web configuration
+  command: cd ~/nagios/nagioscore-** && make install-webconf
+  become: yes
+
+- name: compile and install plugins
+  shell: |
+    cd ~/nagios/nagios-plugins*
+    ./tools/setup
+    ./configure
+    make
+    make install
+
+- name: Add a user to the htpasswd file
+  command: htpasswd -b /usr/local/nagios/etc/htpasswd.users admin admin
+  become: yes
+
+
+- name: Nagios Start/Enable Check
+  service:
+    name: nagios
+    state: restarted
+    enabled: true
+
+- name: Apache/httpd Start/Enable check
+  service:
+    name: apache2
+    state: restarted
+    enabled: true
